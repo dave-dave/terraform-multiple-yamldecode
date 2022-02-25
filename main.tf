@@ -21,5 +21,17 @@ data "local_file" "yaml" {
 
 output "files" {
   description = "Contents of the YAML files."
-  value       = {for i, file in data.local_file.yaml : element(split("/", trim(file.filename, ".yaml")), length(split("/", trim(file.filename, ".yaml")))-1)  => try(yamldecode(trimprefix(file.content, "---")), {})}
+  value       = {
+    # changed from original to reference folder rather than file name and allow overloading of values. 
+    for i, file in data.local_file.yaml :
+      element(split("/", trim(file.filename, ".yaml")), length(split("/", trim(file.filename, ".yaml")))-2)  => yamldecode(trimprefix(file.content, "---"))...
+  }
+}
+
+output "file_paths" {
+  description = "Full paths found from relative paths."
+  value = [
+    for i,file in data.local_file.yaml:
+      abspath(file.filename)
+  ]
 }
